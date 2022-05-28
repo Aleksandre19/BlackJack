@@ -66,6 +66,7 @@ class Play:
     def deal(self):
         dealer_cards = []
         player_cards = []
+        unknown = "Unknown"
         Deck.shuffle(self.deck)
 
         for deal in range(1, 5):
@@ -77,10 +78,49 @@ class Play:
                 player_cards.append(card)
 
         player_message = f"You are dealt: {player_cards[0]} {player_cards[1]}"
-        dealer_message = f"The dealer is dealt: {dealer_cards[0]} {dealer_cards[1]}"
+        dealer_message = f"The dealer is dealt: {dealer_cards[0]} {unknown}"
 
         print(player_message)
         print(dealer_message)
+
+        # dealer_cards = ['A\u2666', '7\u2666', '6\u2666']
+        Play.calculate_dealt_card_value(player_cards)
+
+    @staticmethod
+    def calculate_dealt_card_value(list):
+        # Sort a list to push Ace to the end of the list.
+        # It is easy to calculate Ace value end of the list.
+        sorted_list = sorted(list)
+
+        sum = 0
+        face_cards = ['J', 'Q', 'K']
+        card_without_suit = ""
+        for item in sorted_list:
+            # Chek to find if card begins with 1
+            # If so it means that it is 10 and that is way
+            # We grabb first two letters.
+            # If not we grabb only one letter
+            if item[0] == "1":
+                card_without_suit = item[:2]
+            else:
+                card_without_suit = item[0]
+
+            # If letter is face card so it's value is 10
+            if card_without_suit in face_cards:
+                sum += 10
+            # If the sum of Ace is more than 21 or equals to 21
+            # then Ace value is 11 else it is 1
+            elif card_without_suit.upper() == "A":
+                if (sum + 11) <= 21:
+                    sum += 11
+                else:
+                    sum += 1
+            # If letter is digit it adds to sum converted
+            # to the integer
+            else:
+                sum += int(card_without_suit)
+
+        return sum
 
 
 class Deck:
