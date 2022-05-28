@@ -35,12 +35,14 @@ class Hand:
     def __init__(self, deck, amount):
         self.deck = deck
         self.amount = amount
+        self.bet = 0
         self.start_hand()
 
     def start_hand(self):
         while True:
             bet = int(input("Place your bet: "))
             if self.validate_bet(bet):
+                self.bet = bet
                 Play(self.deck)
                 break
 
@@ -61,11 +63,13 @@ class Hand:
 class Play:
     def __init__(self, deck):
         self.deck = deck
+        self.dealer_cards = []
+        self.player_cards = []
         self.deal()
 
     def deal(self):
-        dealer_cards = []
-        player_cards = []
+        # dealer_cards = []
+        # player_cards = []
         unknown = "Unknown"
         Deck.shuffle(self.deck)
 
@@ -73,18 +77,43 @@ class Play:
             card_idex = random.randint(0, len(self.deck))
             card = self.deck.pop(card_idex)
             if deal % 2 == 0:
-                dealer_cards.append(card)
+                self.dealer_cards.append(card)
             else:
-                player_cards.append(card)
+                self.player_cards.append(card)
 
-        player_message = f"You are dealt: {player_cards[0]} {player_cards[1]}"
-        dealer_message = f"The dealer is dealt: {dealer_cards[0]} {unknown}"
+        player_message = f"You are dealt: {self.player_cards[0]} {self.player_cards[1]}"
+        dealer_message = f"The dealer is dealt: {self.dealer_cards[0]} {unknown}"
 
         print(player_message)
         print(dealer_message)
 
         # dealer_cards = ['A\u2666', '7\u2666', '6\u2666']
-        Play.calculate_dealt_card_value(player_cards)
+        # Play.calculate_dealt_card_value(player_cards)
+        self.hit_or_stay()
+
+    def hit_or_stay(self):
+        while True:
+            action = input("Would you like to hit or stay? ")
+            if action.lower() == "hit" or action.lower() == "stay":
+                if action.lower() == "hit":
+                    self.hit()
+                    print("Hited", self.player_cards)
+
+                if action.lower() == "stay":
+                    print("Stayed")
+                    break
+            else:
+                print("Please write hit or stay. Try again.")
+
+    # If player parameter is True
+    # it adds a card to the player
+    def hit(self, player=True):
+        card_idex = random.randint(0, len(self.deck))
+        card = self.deck.pop(card_idex)
+        if player:
+            self.player_cards.append(card)
+        else:
+            self.dealer_cards.append(card)
 
     @staticmethod
     def calculate_dealt_card_value(list):
