@@ -1,7 +1,7 @@
 import random
 
 
-class BalckJack:
+class BlackJack:
     def __init__(self, amount):
         self.amount = amount
         self.deck = Deck.make_deck()
@@ -12,19 +12,17 @@ class BalckJack:
             play_or_no = input(
                 f"You are starting with ${self.amount}. Would you like to play a hand? ")
 
-            if self.start_game_validation(play_or_no):
+            if play_or_no.lower() == 'yes':
                 Hand(self.deck, self.amount)
                 break
-            else:
-                self.end()
+
+            if play_or_no.lower() == 'no':
+                break
+
+            self.start_game_validation(play_or_no)
 
     def start_game_validation(self, play_or_no):
-        if play_or_no.lower() == "yes" or play_or_no.lower() == "no":
-            if play_or_no.lower() == "yes":
-                return True
-            else:
-                return False
-        else:
+        if play_or_no.lower() != "yes" or play_or_no.lower() != "no":
             print("This is not right format. Write eather yes or no. Try again")
 
     def end(self):
@@ -43,7 +41,7 @@ class Hand:
             bet = int(input("Place your bet: "))
             if self.validate_bet(bet):
                 self.bet = bet
-                Play(self.deck)
+                Play(self.deck, self.bet, self.amount)
                 break
 
     def validate_bet(self, bet):
@@ -61,15 +59,15 @@ class Hand:
 
 
 class Play:
-    def __init__(self, deck):
+    def __init__(self, deck, bet, amount):
         self.deck = deck
+        self.bet = bet
+        self.amount = amount
         self.dealer_cards = []
         self.player_cards = []
         self.deal()
 
     def deal(self):
-        # dealer_cards = []
-        # player_cards = []
         unknown = "Unknown"
         Deck.shuffle(self.deck)
 
@@ -93,20 +91,31 @@ class Play:
 
     def hit_or_stay(self):
         while True:
-            action = input("Would you like to hit or stay? ")
-            if action.lower() == "hit" or action.lower() == "stay":
-                if action.lower() == "hit":
-                    self.hit()
-                    print("Hited", self.player_cards)
+            # If player has not cards over 21 so hit proccess starts.
+            if self.calculate_dealt_card_value(self.player_cards) <= 21:
+                action = input("Would you like to hit or stay? ")
+                if action.lower() == "hit" or action.lower() == "stay":
 
-                if action.lower() == "stay":
-                    print("Stayed")
-                    break
+                    if action.lower() == "hit":
+                        card = self.hit()
+                        print(f"You are dealt: {card}")
+                        print(f"Now you have: {self.player_cards}")
+
+                    if action.lower() == "stay":
+                        pass
+                        break
+                else:
+                    print("Please write hit or stay. Try again.")
             else:
-                print("Please write hit or stay. Try again.")
+                print(
+                    f"Your cards value is over 21 and you lose ${self.bet}")
+                self.amount -= self.bet
+                BlackJack(self.amount)
+                break
 
     # If player parameter is True
     # it adds a card to the player
+
     def hit(self, player=True):
         card_idex = random.randint(0, len(self.deck))
         card = self.deck.pop(card_idex)
@@ -114,6 +123,8 @@ class Play:
             self.player_cards.append(card)
         else:
             self.dealer_cards.append(card)
+
+        return card
 
     @staticmethod
     def calculate_dealt_card_value(list):
@@ -137,7 +148,7 @@ class Play:
             # If letter is face card so it's value is 10
             if card_without_suit in face_cards:
                 sum += 10
-            # If the sum of Ace is more than 21 or equals to 21
+            # If the sum and a Ace is more than 21 or equals to 21
             # then Ace value is 11 else it is 1
             elif card_without_suit.upper() == "A":
                 if (sum + 11) <= 21:
@@ -175,7 +186,7 @@ class Deck:
         random.shuffle(deck)
 
 
-game = BalckJack(500)
+game = BlackJack(500)
 
 
 class Players:
