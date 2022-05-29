@@ -2,10 +2,23 @@ import random
 
 
 class BlackJack:
-    def __init__(self, amount):
+    def __init__(self, amount, deck=None):
         self.amount = amount
-        self.deck = Deck.make_deck()
-        self.start()
+        self.deck_already_made = False
+
+        # If a player has a enough amount so play starts
+        if self.amount <= 0:
+            print("You don't have enough money to play.")
+        else:
+            # Make new deck only begining of the game.
+            # Otherwise use a already made one.
+            if not self.deck_already_made:
+                self.deck = Deck.make_deck()
+                self.deck_already_made = True
+            else:
+                self.deck = deck
+
+            self.start()
 
     def start(self):
         while True:
@@ -17,16 +30,18 @@ class BlackJack:
                 break
 
             if play_or_no.lower() == 'no':
+                self.end()
                 break
 
-            self.start_game_validation(play_or_no)
+            BlackJack.start_game_validation(play_or_no)
 
-    def start_game_validation(self, play_or_no):
+    @staticmethod
+    def start_game_validation(play_or_no):
         if play_or_no.lower() != "yes" or play_or_no.lower() != "no":
             print("This is not right format. Write eather yes or no. Try again")
 
     def end(self):
-        pass
+        self.deck_already_made = False
 
 
 class Hand:
@@ -68,27 +83,63 @@ class Play:
         self.deal()
 
     def deal(self):
-        unknown = "Unknown"
+
         Deck.shuffle(self.deck)
 
+        self.dealing_cards_to_players()
+
+        self.dealt_hand_info()
+
+        if not self.is_there_blackjack():
+            self.hit_or_stay()
+
+    # Dealing the cards
+    def dealing_cards_to_players(self):
         for deal in range(1, 5):
+
+            # Taiking a card from the deck.
             card_idex = random.randint(0, len(self.deck))
             card = self.deck.pop(card_idex)
+
+            # Splting the dealing proccess according to the rule.
+            # First card to the player second to the dealer.
             if deal % 2 == 0:
                 self.dealer_cards.append(card)
             else:
                 self.player_cards.append(card)
 
+    # Showing dealt hand for both players.
+    def dealt_hand_info(self):
+        unknown = "Unknown"
         player_message = f"You are dealt: {self.player_cards[0]} {self.player_cards[1]}"
         dealer_message = f"The dealer is dealt: {self.dealer_cards[0]} {unknown}"
 
         print(player_message)
         print(dealer_message)
 
-        # dealer_cards = ['A\u2666', '7\u2666', '6\u2666']
-        # Play.calculate_dealt_card_value(player_cards)
-        self.hit_or_stay()
+    # Check to see if a player has a BlackJack.
+    # If no he/she continues with hit_or_stay()clear
+    def is_there_blackjack(self):
+        player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
+        if player_cards_sum == 21:
 
+            print(f"The dealer has {self.dealer_cards}")
+            dealer_cards_sum = Play.calculate_dealt_card_value(
+                self.dealer_cards)
+
+            if dealer_cards_sum != 21:
+                print(f"Blackjack! You win ${self.bet * 1.5} :)")
+                self.start_new_hand(self.amount + self.bet * 1.5)
+
+            if dealer_cards_sum == 21:
+                print(f"You tie. Your bet ${self.bet} has been returned.")
+                self.start_new_hand(self.amount + self.bet)
+            return True
+
+        else:
+            return False
+
+    # Continue or keep the hand which was dealt.
     def hit_or_stay(self):
         while True:
             # If player has not cards over 21 so hit proccess starts.
@@ -102,7 +153,7 @@ class Play:
                         print(f"Now you have: {self.player_cards}")
 
                     if action.lower() == "stay":
-                        pass
+                        self.dealers_hand()
                         break
                 else:
                     print("Please write hit or stay. Try again.")
@@ -110,12 +161,38 @@ class Play:
                 print(
                     f"Your cards value is over 21 and you lose ${self.bet}")
                 self.amount -= self.bet
-                BlackJack(self.amount)
+                self.start_new_hand(self.amount)
                 break
 
-    # If player parameter is True
-    # it adds a card to the player
+    # Dealers hand
+    def dealers_hand(self):
+        print(f"The dealer has: {self.dealer_cards}")
+        dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
+        player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
 
+        while dealer_cards_sum < player_cards_sum:
+            dealt_card = self.hit(player=False)
+            print(f"The dealer hits and is dealt: {dealt_card}")
+            print(f"The dealer has: {self.dealer_cards}")
+
+            dealer_cards_sum = Play.calculate_dealt_card_value(
+                self.dealer_cards)
+        else:
+            if dealer_cards_sum > 21:
+                print(f"The dealer busts, you win ${self.bet} :)")
+                self.start_new_hand(self.amount + self.bet)
+            else:
+                if dealer_cards_sum > player_cards_sum:
+                    print("The dealer stays.")
+                    print(f"The dealer wins, you lose ${self.bet} :(")
+                    self.start_new_hand(self.amount - self.bet)
+
+                if dealer_cards_sum == player_cards_sum:
+                    print(f"You tie. Your bet ${self.bet} has been returned.")
+                    self.start_new_hand(self.amount)
+
+    # If player parameter is Flase
+    # it adds a card to the dealer
     def hit(self, player=True):
         card_idex = random.randint(0, len(self.deck))
         card = self.deck.pop(card_idex)
@@ -123,14 +200,28 @@ class Play:
             self.player_cards.append(card)
         else:
             self.dealer_cards.append(card)
-
         return card
+
+    # Start the new hand.
+    def start_new_hand(self, amount):
+        self.deck.extend(self.dealer_cards)
+        self.deck.extend(self.player_cards)
+        BlackJack(amount, self.deck)
 
     @staticmethod
     def calculate_dealt_card_value(list):
-        # Sort a list to push Ace to the end of the list.
-        # It is easy to calculate Ace value end of the list.
-        sorted_list = sorted(list)
+        # Unpacking list and if there is an Ace taking it and putting
+        # it end of the list. Because with Ace end of the list it is
+        # easy to determine the Ace value. Sould it be 11 or 1.
+        sorted_list = []
+        ace_list = ['A\u2666', 'A\u2665', 'A\u2663', 'A\u2660']
+        last_append = []
+        for item in list:
+            if item in ace_list:
+                last_append.append(item)
+            else:
+                sorted_list.append(item)
+        sorted_list.extend(last_append)
 
         sum = 0
         face_cards = ['J', 'Q', 'K']
@@ -186,9 +277,9 @@ class Deck:
         random.shuffle(deck)
 
 
-game = BlackJack(500)
-
-
 class Players:
     def __init__(self, name):
         self.name = name
+
+
+game = BlackJack(500)
