@@ -119,19 +119,20 @@ class Play:
     # Showing dealt hand for both players.
     def dealt_hand_info(self):
         unknown = "Unknown"
-        player_message = f"You are dealt: {self.player_cards[0]} {self.player_cards[1]}"
-        dealer_message = f"The dealer is dealt: {self.dealer_cards[0]} {unknown}"
+        player_message = f"You are dealt: {Play.unpack_list(self.player_cards)}"
+        dealer_message = f"The dealer is dealt: {self.dealer_cards[0]}, {unknown}"
 
         print(player_message)
         print(dealer_message)
 
     # Check to see if a player has a BlackJack.
     # If no he/she continues with hit_or_stay()clear
+
     def is_there_blackjack(self):
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
         if player_cards_sum == 21:
 
-            print(f"The dealer has {self.dealer_cards}")
+            print(f"The dealer has {Play.unpack_list(self.dealer_cards)}")
             dealer_cards_sum = Play.calculate_dealt_card_value(
                 self.dealer_cards)
 
@@ -160,7 +161,8 @@ class Play:
                     if action.lower() == correct_action[0]:
                         card = self.hit()
                         print(f"You are dealt: {card}")
-                        print(f"Now you have: {self.player_cards}")
+                        print(
+                            f"Now you have: {Play.unpack_list(self.player_cards)}")
 
                     if action.lower() == correct_action[1]:
                         self.dealers_hand()
@@ -176,14 +178,14 @@ class Play:
 
     # Dealers hand
     def dealers_hand(self):
-        print(f"The dealer has: {self.dealer_cards}")
+        print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
 
         while dealer_cards_sum < player_cards_sum:
             dealt_card = self.hit(player=False)
             print(f"The dealer hits and is dealt: {dealt_card}")
-            print(f"The dealer has: {self.dealer_cards}")
+            print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
 
             dealer_cards_sum = Play.calculate_dealt_card_value(
                 self.dealer_cards)
@@ -217,6 +219,16 @@ class Play:
         self.deck.extend(self.dealer_cards)
         self.deck.extend(self.player_cards)
         BlackJack(amount, self.deck)
+
+    # Unpack the list to comma separated string
+    @staticmethod
+    def unpack_list(list):
+        unpacked_list = ""
+        comma = ", "
+        for item in list:
+            comma = "" if item == list[-1] else comma
+            unpacked_list += item + comma
+        return unpacked_list
 
     @staticmethod
     def calculate_dealt_card_value(list):
