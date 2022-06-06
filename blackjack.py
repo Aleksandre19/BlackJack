@@ -1,5 +1,5 @@
-from contextvars import copy_context
 import random
+from validation import Validation
 
 
 class BlackJack:
@@ -35,13 +35,7 @@ class BlackJack:
                 self.end()
                 break
 
-            BlackJack.start_game_validation(play_or_no)
-
-    @staticmethod
-    def start_game_validation(play_or_no):
-        correct_options = ['yes', 'no']
-        if play_or_no.lower() not in correct_options:
-            print("This is not right format. Write eather yes or no. Try again")
+            Validation.start_game_validation(play_or_no)
 
     def end(self):
         self.deck_already_made = False
@@ -58,20 +52,10 @@ class Hand:
     def start_hand(self):
         while True:
             bet = int(input("Place your bet: "))
-            if self.validate_bet(bet):
+            if Validation.validate_bet(bet, self.amount):
                 self.bet = bet
                 Play(self.deck, self.bet, self.amount)
                 break
-
-    def validate_bet(self, bet):
-        if bet <= 0:
-            print("Minimum amount of the bet is $1")
-            return False
-        elif bet > self.amount:
-            print("You do not have sufficient funds.")
-            return False
-        else:
-            return True
 
 
 class Play:
