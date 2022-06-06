@@ -1,14 +1,16 @@
+from contextvars import copy_context
 import random
 
 
 class BlackJack:
-    def __init__(self, amount, deck=None):
+    def __init__(self, amount=0, deck=None):
         self.amount = amount
         self.deck_already_made = False
 
         # If a player has a enough amount so play starts
         if self.amount <= 0:
-            print("You don't have enough money to play.")
+            print(
+                "You've ran out of money. Please restart this program to try again. Goodbye.")
         else:
             # Make new deck only begining of the game.
             # Otherwise use a already made one.
@@ -26,7 +28,7 @@ class BlackJack:
                 f"You are starting with ${self.amount}. Would you like to play a hand? ")
 
             if play_or_no.lower() == 'yes':
-                Hand(self.deck, self.amount)
+                Hand(self.amount, self.deck)
                 break
 
             if play_or_no.lower() == 'no':
@@ -37,17 +39,19 @@ class BlackJack:
 
     @staticmethod
     def start_game_validation(play_or_no):
-        if play_or_no.lower() != "yes" or play_or_no.lower() != "no":
+        correct_options = ['yes', 'no']
+        if play_or_no.lower() not in correct_options:
             print("This is not right format. Write eather yes or no. Try again")
 
     def end(self):
         self.deck_already_made = False
+        print(f"You left the game with {self.amount}")
 
 
 class Hand:
-    def __init__(self, deck, amount):
-        self.deck = deck
+    def __init__(self, amount, deck):
         self.amount = amount
+        self.deck = deck
         self.bet = 0
         self.start_hand()
 
@@ -69,9 +73,6 @@ class Hand:
         else:
             return True
 
-    def end_hand(self):
-        pass
-
 
 class Play:
     def __init__(self, deck, bet, amount):
@@ -90,8 +91,15 @@ class Play:
 
         self.dealt_hand_info()
 
-        if not self.is_there_blackjack():
-            self.hit_or_stay()
+        # self.dealer_cards = []
+        # test = ['8\u2666', '8\u2666']
+        # self.dealer_cards.extend(test)
+        # self.split_or_not()
+
+        if self.is_there_blackjack():
+            return
+
+        self.hit_or_stay()
 
     # Dealing the cards
     def dealing_cards_to_players(self):
@@ -141,18 +149,20 @@ class Play:
 
     # Continue or keep the hand which was dealt.
     def hit_or_stay(self):
+        correct_action = ['hit', 'stay']
         while True:
             # If player has not cards over 21 so hit proccess starts.
             if self.calculate_dealt_card_value(self.player_cards) <= 21:
                 action = input("Would you like to hit or stay? ")
-                if action.lower() == "hit" or action.lower() == "stay":
 
-                    if action.lower() == "hit":
+                if action.lower() in correct_action:
+
+                    if action.lower() == correct_action[0]:
                         card = self.hit()
                         print(f"You are dealt: {card}")
                         print(f"Now you have: {self.player_cards}")
 
-                    if action.lower() == "stay":
+                    if action.lower() == correct_action[1]:
                         self.dealers_hand()
                         break
                 else:
@@ -224,17 +234,12 @@ class Play:
         sorted_list.extend(last_append)
 
         sum = 0
-        face_cards = ['J', 'Q', 'K']
+        face_cards = ['T', 'J', 'Q', 'K']
         card_without_suit = ""
         for item in sorted_list:
-            # Chek to find if card begins with 1
-            # If so it means that it is 10 and that is way
-            # We grabb first two letters.
-            # If not we grabb only one letter
-            if item[0] == "1":
-                card_without_suit = item[:2]
-            else:
-                card_without_suit = item[0]
+
+            # Grabbing a value without a suit
+            card_without_suit = item[0]
 
             # If letter is face card so it's value is 10
             if card_without_suit in face_cards:
@@ -261,7 +266,7 @@ class Deck:
     @staticmethod
     def make_deck():
         card_values = ['2', '3', '4', '5', '6',
-                       '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+                       '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
         card_suits = ["\u2666", "\u2665", "\u2663", "\u2660"]
         deck_list = []
 
@@ -275,11 +280,6 @@ class Deck:
     @staticmethod
     def shuffle(deck):
         random.shuffle(deck)
-
-
-class Players:
-    def __init__(self, name):
-        self.name = name
 
 
 game = BlackJack(500)
