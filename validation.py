@@ -15,3 +15,19 @@ class Validation:
             return False
         else:
             return True
+
+    @staticmethod
+    def confirm_start(amount):
+        while True:
+            play_or_no = input(
+                f"You are starting with ${amount}. Would you like to play a hand? ")
+
+            if play_or_no.lower() == 'yes':
+                return True
+                break
+
+            if play_or_no.lower() == 'no':
+                return False
+                break
+
+            Validation.start_game_validation(play_or_no)
