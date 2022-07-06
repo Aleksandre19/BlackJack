@@ -10,12 +10,13 @@ class Play:
         self.amount = amount
         self.dealer_cards = []
         self.player_cards = []
+        self.player_over_21 = False
         # self.deal()
         self.start_hand()
 
     def start_hand(self):
-        # Check if a user has a sufficient amount
-        if self.check_balance():
+        self.player_over_21 = False
+        if self.check_balance():  # Check if a user has a sufficient amount
 
             # Check if a user wants to start play or not
             if Validation.confirm_start(self.amount):
@@ -27,8 +28,12 @@ class Play:
                 if self.is_there_blackjack():
                     return
 
-                if not self.hit_or_stay():  # Player stayes
-                    self.dealers_hand()  # Dealer playes
+                if not self.hit_or_stay():  # When a player stayes
+
+                    if not self.player_over_21:
+                        self.dealers_hand()  # Dealer playes
+                    else:
+                        self.start_new_hand(self.amount)
 
     def check_balance(self):
         # If a player has a enough amount so play starts
@@ -130,10 +135,10 @@ class Play:
                 else:
                     print("Please write hit or stay. Try again.")
             else:
+                self.player_over_21 = True
                 print(
                     f"Your cards value is over 21 and you lose ${self.bet}")
                 self.amount -= self.bet
-                self.start_new_hand(self.amount)
                 break
 
     # Dealers hand
@@ -165,6 +170,7 @@ class Play:
 
     # If player parameter is Flase
     # it adds a card to the dealer
+
     def hit(self, player=True):
         card_idex = random.randint(0, len(self.deck))
         card = self.deck.pop(card_idex)
