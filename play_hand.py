@@ -1,22 +1,25 @@
 import random
 from deck import Deck
 from validation import Validation
+# import asyncio
 
 
 class Play:
     def __init__(self, amount):
         self.deck = None
-        # self.bet = bet
         self.amount = amount
         self.dealer_cards = []
         self.player_cards = []
         self.player_over_21 = False
-        # self.deal()
         self.start_hand()
 
     def start_hand(self):
+
+        # True when a player goes over 21
         self.player_over_21 = False
-        if self.check_balance():  # Check if a user has a sufficient amount
+
+        # Check if a user has a sufficient amount
+        if self.check_balance():
 
             # Check if a user wants to start play or not
             if Validation.confirm_start(self.amount):
@@ -25,23 +28,32 @@ class Play:
 
                 self.deal_card()
 
+                # Check to see if a player got a BlackJack
                 if self.is_there_blackjack():
                     return
 
-                if not self.hit_or_stay():  # When a player stayes
+                # Player's turn
+                if not self.player_turn():
 
+                    # If a player doesn't goes over 21 by adding the cards
                     if not self.player_over_21:
-                        self.dealers_hand()  # Dealer playes
+
+                        # Dealer's turn
+                        self.dealer_turn()
+
                     else:
+                        # If a player goes over 21 than starting a new hand
                         self.start_new_hand(self.amount)
 
     def check_balance(self):
         # If a player has a enough amount so play starts
+        # and maiking a deck of cards
         if self.amount <= 0:
             print(
                 "You've ran out of money. Please restart this program to try again. Goodbye.")
             return False
         else:
+            # Make a deck of cards
             self.deck = Deck.make_deck()
             return True
 
@@ -85,7 +97,7 @@ class Play:
     def dealt_hand_info(self):
         unknown = "Unknown"
         player_message = f"You are dealt: {Play.unpack_list(self.player_cards)}"
-        dealer_message = f"The dealer is dealt: {self.dealer_cards[0]}, {unknown}"
+        dealer_message = f"The dealer is dealt: {unknown}, {self.dealer_cards[1]}"
 
         print(player_message)
         print(dealer_message)
@@ -114,7 +126,7 @@ class Play:
             return False
 
     # Continue or keep the hand which was dealt.
-    def hit_or_stay(self):
+    def player_turn(self):
         correct_action = ['hit', 'stay']
         while True:
             # If player has not cards over 21 so hit proccess starts.
@@ -124,10 +136,7 @@ class Play:
                 if action.lower() in correct_action:
 
                     if action.lower() == correct_action[0]:
-                        card = self.hit()
-                        print(f"You are dealt: {card}")
-                        print(
-                            f"Now you have: {Play.unpack_list(self.player_cards)}")
+                        self.hit()
 
                     if action.lower() == correct_action[1]:
                         return False
@@ -142,15 +151,14 @@ class Play:
                 break
 
     # Dealers hand
-    def dealers_hand(self):
+    def dealer_turn(self):
         print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
 
         while dealer_cards_sum < player_cards_sum:
-            dealt_card = self.hit(player=False)
-            print(f"The dealer hits and is dealt: {dealt_card}")
-            print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
+
+            self.hit(player=False)
 
             dealer_cards_sum = Play.calculate_dealt_card_value(
                 self.dealer_cards)
@@ -170,14 +178,29 @@ class Play:
 
     # If player parameter is Flase
     # it adds a card to the dealer
-
     def hit(self, player=True):
-        card_idex = random.randint(0, len(self.deck))
-        card = self.deck.pop(card_idex)
+
+        # Deal a last card from the deck
+        card = self.deck.pop(len(self.deck) - 1)
+        unpack = None
+        p_message = ""
+        card_message = ""
+
         if player:
             self.player_cards.append(card)
-        else:
+            unpack = self.player_cards
+            p_message = "You are dealt: "
+            card_message = "Now you have: "
+        else:  # Here is dealer's turn
             self.dealer_cards.append(card)
+            unpack = self.dealer_cards
+            p_message = "The dealer hits and is dealt: "
+            card_message = "The dealer has: "
+
+        print(f"{p_message} {card}")
+        print(
+            f"{card_message} {Play.unpack_list(unpack)}")
+
         return card
 
     # Start the new hand.
@@ -201,7 +224,7 @@ class Play:
     def calculate_dealt_card_value(list):
         # Unpacking list and if there is an Ace taking it and putting
         # it end of the list. Because with Ace end of the list it is
-        # easy to determine the Ace value. Sould it be 11 or 1.
+        # easy to determine the Ace value, Sould it be 11 or 1.
         sorted_list = []
         ace_list = ['A\u2666', 'A\u2665', 'A\u2663', 'A\u2660']
         last_append = []
