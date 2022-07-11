@@ -7,14 +7,17 @@ class Validation:
 
     @staticmethod
     def validate_bet(bet, amount):
-        if bet <= 0:
-            print("Minimum amount of the bet is $1")
-            return False
-        elif bet > amount:
-            print("You do not have sufficient funds.")
-            return False
+        if bet.isdigit():
+            if int(bet) <= 0:
+                print("Minimum amount of the bet is $1")
+                return False
+            elif int(bet) > amount:
+                print("You do not have sufficient funds.")
+                return False
+            else:
+                return True
         else:
-            return True
+            print("Please enter a digit value")
 
     @staticmethod
     def confirm_start(amount):

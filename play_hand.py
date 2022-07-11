@@ -13,7 +13,8 @@ class Play:
         self.player_over_21 = False
         self.save_player_cards = None
         self.save_dealer_cards = None
-        self.splited = False
+        self.splitted = False
+        self.split_aces = False
         self.start_hand()
 
     def start_hand(self):
@@ -65,9 +66,9 @@ class Play:
 
     def place_bet(self):
         while True:
-            bet = int(input("Place your bet: "))
+            bet = input("Place your bet: ")
             if Validation.validate_bet(bet, self.amount):
-                self.bet = bet
+                self.bet = int(bet)
                 break
 
     def deal_card(self):
@@ -78,13 +79,12 @@ class Play:
 
         self.dealt_hand_info()
 
-        self.player_cards = []
-        test = ['2\u2666', '2\u2665']
-        self.player_cards.extend(test)
+        # self.player_cards = []
+        # test = ['A\u2666', 'A\u2665']
+        # self.player_cards.extend(test)
         # self.split_or_not()
 
     # Dealing the cards
-
     def dealing_cards_to_players(self):
         for deal in range(1, 5):
 
@@ -145,15 +145,19 @@ class Play:
                     if answer.lower() == 'no':
                         return False
 
-                    self.splited = True
+                    self.splitted = True
 
-                    # Play first splited hand
+                    # Check if there are two aces and and play according to rule
+                    if self.player_cards[0][0] == 'A' and self.player_cards[1][0] == 'A':
+                        self.split_aces = True
+
+                    # Play first splitted hand
                     first_hand = self.split_hand()
 
                     # Give back the second dealt card to the player
                     self.player_cards = self.save_player_cards
 
-                    # Play second splited hand
+                    # Play second splitted hand
                     second_hand = self.split_hand()
 
                     hands = [first_hand, second_hand]
@@ -170,7 +174,7 @@ class Play:
                             self.player_cards = hand
 
                             print(
-                                f"You play {hand_number} hand. In this hand you have {Play.unpack_list(hand)}")
+                                f"In the {hand_number} hand you have {Play.unpack_list(hand)}")
 
                             # Dealer's turn
                             result = self.dealer_turn()
@@ -188,15 +192,16 @@ class Play:
 
                             # It's tie
                             elif result == "tie":
-                                print(
-                                    f"You tie. Your bet ${self.bet} has been returned.")
+                                pass
 
                         else:
                             # Player gets over 21
                             print(
                                 f"In the {hand_number} you bust. Dealer wins {self.bet}")
 
-                    self.splited = False
+                    self.splitted = False
+
+                    self.split_aces = False
 
                     self.start_new_hand(self.amount)
 
@@ -243,7 +248,15 @@ class Play:
                 if action.lower() in correct_action:
 
                     if action.lower() == correct_action[0]:
-                        self.hit()
+
+                        # If a hand is splitted and there are two aces than by the
+                        # rule player gets only one card.
+                        # Otherwise he/she gets as many as wanted
+                        if self.split_aces:
+                            self.hit()
+                            break
+                        else:
+                            self.hit()
 
                     if action.lower() == correct_action[1]:
                         return False
@@ -253,7 +266,7 @@ class Play:
             else:
                 self.player_over_21 = True
 
-                if not self.splited:
+                if not self.splitted:
                     print(
                         f"Your cards value is over 21 and you lose ${self.bet}")
                     self.amount -= self.bet
@@ -278,7 +291,7 @@ class Play:
             if dealer_cards_sum > 21:
                 print(f"The dealer busts, you win ${self.bet} :)")
 
-                if not self.splited:
+                if not self.splitted:
                     self.start_new_hand(self.amount + self.bet)
                 else:
                     return "wins"
@@ -289,7 +302,7 @@ class Play:
                     print("The dealer stays.")
                     print(f"The dealer wins, you lose ${self.bet} :(")
 
-                    if not self.splited:
+                    if not self.splitted:
                         self.start_new_hand(self.amount - self.bet)
                     else:
                         return "lose"
@@ -297,7 +310,7 @@ class Play:
                 if dealer_cards_sum == player_cards_sum:
                     print(f"You tie. Your bet ${self.bet} has been returned.")
 
-                    if not self.splited:
+                    if not self.splitted:
                         self.start_new_hand(self.amount)
                     else:
                         return "tie"
