@@ -31,3 +31,13 @@ class Validation:
                 break
 
             Validation.start_game_validation(play_or_no)
+
+    @staticmethod
+    def validate_split(answer):
+        valid_options = ['yes', 'no']
+
+        if answer not in valid_options:
+            print("Please enter yes or no ")
+            return False
+
+        return True
