@@ -15,6 +15,10 @@ class Play:
         self.save_dealer_cards = None
         self.splitted = False
         self.split_aces = False
+        self.split_doubled = False
+        self.split_first_double = 0
+        self.split_second_double = 0
+
         self.start_hand()
 
     def start_hand(self):
@@ -80,9 +84,8 @@ class Play:
         self.dealt_hand_info()
 
         # self.player_cards = []
-        # test = ['A\u2666', 'A\u2665']
+        # test = ['2\u2666', '2\u2665']
         # self.player_cards.extend(test)
-        # self.split_or_not()
 
     # Dealing the cards
     def dealing_cards_to_players(self):
@@ -138,6 +141,7 @@ class Play:
             while True:
                 print(
                     f"You have two {self.player_cards[0]}, {self.player_cards[1]}")
+
                 answer = input("Would you like to split? yes/no: ")
 
                 if Validation.validate_split(answer.lower()):
@@ -147,18 +151,21 @@ class Play:
 
                     self.splitted = True
 
+                    # save the bet for a double down case
+                    save_bet_for_split = self.bet
+
                     # Check if there are two aces and and play according to rule
                     if self.player_cards[0][0] == 'A' and self.player_cards[1][0] == 'A':
                         self.split_aces = True
 
                     # Play first splitted hand
-                    first_hand = self.split_hand()
+                    first_hand = self.split_hand(1)
 
                     # Give back the second dealt card to the player
                     self.player_cards = self.save_player_cards
 
                     # Play second splitted hand
-                    second_hand = self.split_hand()
+                    second_hand = self.split_hand(2)
 
                     hands = [first_hand, second_hand]
 
@@ -167,6 +174,10 @@ class Play:
 
                     # Play hands with dealer
                     for key, hand in enumerate(hands):
+
+                        # Restore a basic value of the bet
+                        self.bet = save_bet_for_split
+
                         hand_number = "first" if key == 0 else "second"
 
                         if 'over_21' not in hand:
@@ -175,6 +186,13 @@ class Play:
 
                             print(
                                 f"In the {hand_number} hand you have {Play.unpack_list(hand)}")
+
+                            # If there was a double down so determine the bet amount
+                            if key == 0 and self.split_first_double != 0:
+                                self.bet = self.split_first_double
+
+                            if key == 1 and self.split_second_double != 0:
+                                self.bet = self.split_second_double
 
                             # Dealer's turn
                             result = self.dealer_turn()
@@ -195,26 +213,37 @@ class Play:
                                 pass
 
                         else:
+
                             # Player gets over 21
                             print(
-                                f"In the {hand_number} you bust. Dealer wins {self.bet}")
+                                f"In the {hand_number} hand you bust. Dealer wins {self.bet * 2}")
+                            self.amount -= self.bet * 2
 
                     self.splitted = False
-
                     self.split_aces = False
+                    self.split_first_double = 0
+                    self.split_second_double = 0
 
                     self.start_new_hand(self.amount)
-
                     return True
+
         else:
             return False
 
-    def split_hand(self):
+    def split_hand(self, split_hand):
         self.prepare_cards_for_split()
 
         print(f"Now you play with a: {Play.unpack_list(self.player_cards)}")
 
         self.player_turn()
+
+        if self.split_doubled and split_hand == 1:
+            self.split_doubled = False
+            self.split_first_double = self.bet * 2
+
+        if self.split_doubled and split_hand == 2:
+            self.split_doubled = False
+            self.split_second_double = self.bet * 2
 
         # If player gets over 21 than the cards
         # doesn't add in to the player's stock.
@@ -239,11 +268,13 @@ class Play:
 
     # Continue or keep the hand which was dealt.
     def player_turn(self):
-        correct_action = ['hit', 'stay']
+
         while True:
             # If player has not cards over 21 so hit proccess starts.
             if self.calculate_dealt_card_value(self.player_cards) <= 21:
-                action = input("Would you like to hit or stay? ")
+
+                # Manage a message appearance
+                action, correct_action = self.manage_msg_appearance()
 
                 if action.lower() in correct_action:
 
@@ -251,16 +282,21 @@ class Play:
 
                         # If a hand is splitted and there are two aces than by the
                         # rule player gets only one card.
-                        # Otherwise he/she gets as many as wanted
+                        # Otherwise he/she gets as many as wished
                         if self.split_aces:
                             self.hit()
                             break
                         else:
                             self.hit()
 
-                    if action.lower() == correct_action[1]:
+                    if action == "double":
+                        if "double" in correct_action:
+                            if self.double_down(action, correct_action):
+                                break
+
+                    if action.lower() == correct_action[correct_action.index("stay")]:
                         return False
-                        break
+
                 else:
                     print("Please write hit or stay. Try again.")
             else:
@@ -281,7 +317,7 @@ class Play:
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
 
-        while dealer_cards_sum < player_cards_sum:
+        while dealer_cards_sum < 17:
             self.hit(player=False)
 
             dealer_cards_sum = Play.calculate_dealt_card_value(
@@ -307,6 +343,14 @@ class Play:
                     else:
                         return "lose"
 
+                if dealer_cards_sum < player_cards_sum:
+                    print(f"You win and dealer lose ${self.bet} :)")
+
+                    if not self.splitted:
+                        self.start_new_hand(self.amount + self.bet)
+                    else:
+                        return "wins"
+
                 if dealer_cards_sum == player_cards_sum:
                     print(f"You tie. Your bet ${self.bet} has been returned.")
 
@@ -314,6 +358,37 @@ class Play:
                         self.start_new_hand(self.amount)
                     else:
                         return "tie"
+
+    def manage_msg_appearance(self):
+
+        correct_action = ['hit', 'stay']
+
+        if len(self.player_cards) == 2:
+            correct_action.insert(1, "double")
+            action_msg = "hit, double or stay"
+        else:
+            correct_action = ['hit', 'stay']
+            action_msg = "hit or stay"
+
+        # Get a inout from user
+        action = input(f"Would you like to {action_msg}? ")
+        return action, correct_action
+
+    def double_down(self, action="", correct_action=[]):
+        # Doubling down a hand
+        if action.lower() == correct_action[1] and len(self.player_cards) == 2:
+
+            if not self.splitted:
+                self.bet = self.bet * 2
+            else:
+                self.split_doubled = True
+
+            self.hit()
+
+            if self.calculate_dealt_card_value(self.player_cards) > 21:
+                self.player_over_21 = True
+
+            return True
 
     # If player parameter is Flase
     # it adds a card to the dealer
