@@ -17,6 +17,7 @@ class Play:
         self.split_doubled = False
         self.split_first_double = 0
         self.split_second_double = 0
+        self.splitted_blackjack = False
 
         self.start_hand()
 
@@ -89,7 +90,7 @@ class Play:
         # self.player_cards.extend(test)
 
         # self.dealer_cards = []
-        # test = ['A\u2666', '2\u2665']
+        # test = ['2\u2666', '5\u2665']
         # self.dealer_cards.extend(test)
 
     # Dealing the cards
@@ -164,11 +165,19 @@ class Play:
 
             if dealer_cards_sum != 21:
                 print(f"Blackjack! You win ${self.bet * 1.5} :)")
-                self.start_new_hand(self.amount + self.bet * 1.5)
+
+                if self.splitted:
+                    self.splitted_blackjack = True
+
+                if not self.splitted:
+                    self.start_new_hand(self.amount + self.bet * 1.5)
 
             if dealer_cards_sum == 21:
                 print(f"You tie. Your bet ${self.bet} has been returned.")
-                self.start_new_hand(self.amount + self.bet)
+
+                if not self.splitted:
+                    self.start_new_hand(self.amount + self.bet)
+
             return True
 
         else:
@@ -209,9 +218,6 @@ class Play:
 
                     hands = [first_hand, second_hand]
 
-                    # Save dealer's starting cards for second hand
-                    self.save_dealer_cards = tuple(self.dealer_cards)
-
                     # Play hands with dealer
                     for key, hand in enumerate(hands):
 
@@ -224,6 +230,7 @@ class Play:
 
                             self.player_cards = hand
 
+                            print("")
                             print(
                                 f"In the {hand_number} hand you have {Play.unpack_list(hand)}")
 
@@ -237,16 +244,19 @@ class Play:
                             # Dealer's turn
                             result = self.dealer_turn()
 
-                            # Returning a starting hand to dealer
-                            self.dealer_cards = list(self.save_dealer_cards)
-
                             # Player wins
                             if result == "wins":
-                                self.amount += self.bet
+
+                                if self.splitted_blackjack:
+                                    self.amount += self.bet * 1.5
+
+                                if not self.splitted_blackjack:
+                                    self.amount += self.bet
+
+                                self.splitted_blackjack = False
 
                             # Dealer wins
                             elif result == "lose":
-                                print(self.bet, self.split_first_double)
                                 self.amount -= self.bet
 
                             # It's tie
@@ -257,8 +267,8 @@ class Play:
 
                             # Player gets over 21
                             print(
-                                f"In the {hand_number} hand you bust. Dealer wins {self.bet * 2}")
-                            self.amount -= self.bet * 2
+                                f"In the {hand_number} hand you bust. Dealer wins {self.bet}")
+                            self.amount -= self.bet
 
                     self.splitted = False
                     self.split_aces = False
@@ -272,8 +282,10 @@ class Play:
             return False
 
     def split_hand(self, split_hand):
+
         self.prepare_cards_for_split()
 
+        print("")
         print(f"Now you play with a: {Play.unpack_list(self.player_cards)}")
 
         self.player_turn()
@@ -319,6 +331,7 @@ class Play:
 
                 if action.lower() in correct_action:
 
+                    # User hits
                     if action.lower() == correct_action[0]:
 
                         # If a hand is splitted and there are two aces than by the
@@ -354,6 +367,10 @@ class Play:
 
     # Dealers hand
     def dealer_turn(self):
+
+        if self.splitted:
+            if self.is_there_blackjack():
+                return 'wins'
 
         print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
