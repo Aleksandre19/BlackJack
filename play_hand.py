@@ -1,7 +1,6 @@
 import random
 from deck import Deck
 from validation import Validation
-# import asyncio
 
 
 class Play:
@@ -39,6 +38,8 @@ class Play:
                 # Check to see if a player got a BlackJack
                 if self.is_there_blackjack():
                     return
+
+                self.check_incurance()
 
                 if self.split():
                     return
@@ -84,8 +85,12 @@ class Play:
         self.dealt_hand_info()
 
         # self.player_cards = []
-        # test = ['2\u2666', '2\u2665']
+        # test = ['A\u2666', 'K\u2665']
         # self.player_cards.extend(test)
+
+        # self.dealer_cards = []
+        # test = ['A\u2666', 'K\u2665']
+        # self.dealer_cards.extend(test)
 
     # Dealing the cards
     def dealing_cards_to_players(self):
@@ -106,19 +111,47 @@ class Play:
     def dealt_hand_info(self):
         unknown = "Unknown"
         player_message = f"You are dealt: {Play.unpack_list(self.player_cards)}"
-        dealer_message = f"The dealer is dealt: {unknown}, {self.dealer_cards[1]}"
+        dealer_message = f"The dealer is dealt: {self.dealer_cards[0]}, {unknown}"
 
         print(player_message)
         print(dealer_message)
 
+    # Dedact a insurance case
+    def check_incurance(self):
+
+        if self.dealer_cards[0][0] == 'A':
+
+            answer = input("Dealer has a A. Do you want to insurance? ")
+            if Validation.yes_or_no(answer.lower()):
+
+                if answer.lower() == 'no':
+                    return False
+
+                check_dealers_blackjack = Play.calculate_dealt_card_value(
+                    self.dealer_cards)
+
+                if check_dealers_blackjack == 21:
+                    show_dealer_cards = Play.unpack_list(self.dealer_cards)
+
+                    print(
+                        f"Dealer has a blackjack: {show_dealer_cards}. You lose {self.bet / 2}")
+
+                    self.start_new_hand(self.amount - self.bet / 2)
+                    return True
+
+                return False
+
+        return False
+
     # Check to see if a player has a BlackJack.
     # If no he/she continues with hit_or_stay()clear
+    def is_there_blackjack(self, player=True):
 
-    def is_there_blackjack(self):
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
         if player_cards_sum == 21:
 
             print(f"The dealer has {Play.unpack_list(self.dealer_cards)}")
+
             dealer_cards_sum = Play.calculate_dealt_card_value(
                 self.dealer_cards)
 
@@ -144,7 +177,7 @@ class Play:
 
                 answer = input("Would you like to split? yes/no: ")
 
-                if Validation.validate_split(answer.lower()):
+                if Validation.yes_or_no(answer.lower()):
 
                     if answer.lower() == 'no':
                         return False
@@ -313,6 +346,7 @@ class Play:
 
     # Dealers hand
     def dealer_turn(self):
+
         print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
@@ -374,17 +408,21 @@ class Play:
         action = input(f"Would you like to {action_msg}? ")
         return action, correct_action
 
+    # This implements double down rule in blackjack
     def double_down(self, action="", correct_action=[]):
         # Doubling down a hand
         if action.lower() == correct_action[1] and len(self.player_cards) == 2:
 
+            # Check to see if there is split or no
             if not self.splitted:
                 self.bet = self.bet * 2
             else:
                 self.split_doubled = True
 
+            # Add a card
             self.hit()
 
+            # Check if a player goes over 21
             if self.calculate_dealt_card_value(self.player_cards) > 21:
                 self.player_over_21 = True
 
@@ -392,20 +430,21 @@ class Play:
 
     # If player parameter is Flase
     # it adds a card to the dealer
-
     def hit(self, player=True):
 
         # Deal a last card from the deck
         card = self.deck.pop(len(self.deck) - 1)
+
         unpack = None
         p_message = ""
         card_message = ""
 
-        if player:
+        if player:  # Players turn
             self.player_cards.append(card)
             unpack = self.player_cards
             p_message = "You are dealt: "
             card_message = "Now you have: "
+
         else:  # Here is dealer's turn
             self.dealer_cards.append(card)
             unpack = self.dealer_cards

@@ -36,7 +36,7 @@ class Validation:
             Validation.start_game_validation(play_or_no)
 
     @staticmethod
-    def validate_split(answer):
+    def yes_or_no(answer):
         valid_options = ['yes', 'no']
 
         if answer not in valid_options:
