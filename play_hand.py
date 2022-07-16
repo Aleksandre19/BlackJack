@@ -85,11 +85,11 @@ class Play:
         self.dealt_hand_info()
 
         # self.player_cards = []
-        # test = ['A\u2666', 'K\u2665']
+        # test = ['2\u2666', '2\u2665']
         # self.player_cards.extend(test)
 
         # self.dealer_cards = []
-        # test = ['A\u2666', 'K\u2665']
+        # test = ['A\u2666', '2\u2665']
         # self.dealer_cards.extend(test)
 
     # Dealing the cards
@@ -127,17 +127,24 @@ class Play:
                 if answer.lower() == 'no':
                     return False
 
-                check_dealers_blackjack = Play.calculate_dealt_card_value(
+                check_dealers_cards = Play.calculate_dealt_card_value(
                     self.dealer_cards)
 
-                if check_dealers_blackjack == 21:
+                if check_dealers_cards == 21:
+
                     show_dealer_cards = Play.unpack_list(self.dealer_cards)
 
+                    print(f"Dealer has a blackjack: {show_dealer_cards}.")
                     print(
-                        f"Dealer has a blackjack: {show_dealer_cards}. You lose {self.bet / 2}")
+                        f"You win {self.bet} for insurance and lose you initial bet: {self.bet}")
 
-                    self.start_new_hand(self.amount - self.bet / 2)
+                    self.start_new_hand(self.amount)
                     return True
+
+                else:
+                    print(
+                        f"Dealer doesn't have a blackjack. Dealer takes you insurance: {self.bet / 2}")
+                    self.amount -= self.bet / 2
 
                 return False
 
@@ -239,6 +246,7 @@ class Play:
 
                             # Dealer wins
                             elif result == "lose":
+                                print(self.bet, self.split_first_double)
                                 self.amount -= self.bet
 
                             # It's tie
@@ -386,7 +394,13 @@ class Play:
                         return "wins"
 
                 if dealer_cards_sum == player_cards_sum:
-                    print(f"You tie. Your bet ${self.bet} has been returned.")
+
+                    tie_bet = self.bet / 2 \
+                        if self.split_first_double > 0 or \
+                        self.split_second_double > 0 \
+                        else self.bet
+
+                    print(f"You tie. Your bet ${tie_bet} has been returned.")
 
                     if not self.splitted:
                         self.start_new_hand(self.amount)
