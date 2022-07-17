@@ -1,3 +1,19 @@
+"""
+To run the game you must run a file named by 
+main.py located as same directory as this file.
+
+Here are implemented all the logics of the game such are:
+place bet - self.place_bet(),
+dealing the crads - self.deal_card(),
+Blackjack case - self.is_there_blackjack(),
+insurance case - self.check_incurance(),
+splitting the hand - self.split(),
+player's turn - self.player_turn(),
+dealer's turn - self.dealer_turn(),
+starting a new hand - self.start_new_hand().
+
+The game starts with a self.start_game()
+"""
 import random
 from deck import Deck
 from validation import Validation
@@ -19,24 +35,21 @@ class Play:
         self.split_second_double = 0
         self.splitted_blackjack = False
 
-        self.start_hand()
+        self.start_game()
 
-    def start_hand(self):
+    # Here starts and ends a game.
+    def start_game(self):
 
-        # True when a player goes over 21
         self.player_over_21 = False
 
-        # Check if a user has a sufficient amount
         if self.check_balance():
 
-            # Check if a user wants to start play or not
             if Validation.confirm_start(self.amount):
 
                 self.place_bet()
 
                 self.deal_card()
 
-                # Check to see if a player got a BlackJack
                 if self.is_there_blackjack():
                     return
 
@@ -45,28 +58,20 @@ class Play:
                 if self.split():
                     return
 
-                # Player's turn
+                # When player enters a 'stay' command
+                # the player_turn() returns a False.
                 if not self.player_turn():
-
-                    # If a player doesn't goes over 21 by adding the cards
                     if not self.player_over_21:
-
-                        # Dealer's turn
                         self.dealer_turn()
-
                     else:
-                        # If a player goes over 21 than starting a new hand
                         self.start_new_hand(self.amount)
 
     def check_balance(self):
-        # If a player has a enough amount so play starts
-        # and maiking a deck of cards
         if self.amount <= 0:
             print(
                 "You've ran out of money. Please restart this program to try again. Goodbye.")
             return False
         else:
-            # Make a deck of cards
             self.deck = Deck.make_deck()
             return True
 
@@ -86,43 +91,41 @@ class Play:
         self.dealt_hand_info()
 
         # self.player_cards = []
-        # test = ['2\u2666', '2\u2665']
+        # test = ['6\u2666', '6\u2665']
         # self.player_cards.extend(test)
 
         # self.dealer_cards = []
         # test = ['2\u2666', '5\u2665']
         # self.dealer_cards.extend(test)
 
-    # Dealing the cards
+    # First card to the player and
+    # the second card to the dealer
     def dealing_cards_to_players(self):
         for deal in range(1, 5):
 
-            # Taiking a card from the deck.
-            card_idex = random.randint(0, len(self.deck) - 1)
-            card = self.deck.pop(card_idex)
+            card_idex = len(self.deck) - 1
+            card = self.deck.pop(card_idex)  # Last card
 
-            # Splting the dealing proccess according to the rule.
-            # First card to the player second to the dealer.
             if deal % 2 == 0:
                 self.dealer_cards.append(card)
             else:
                 self.player_cards.append(card)
 
-    # Showing dealt hand for both players.
     def dealt_hand_info(self):
         unknown = "Unknown"
         player_message = f"You are dealt: {Play.unpack_list(self.player_cards)}"
         dealer_message = f"The dealer is dealt: {self.dealer_cards[0]}, {unknown}"
 
+        print("")
         print(player_message)
         print(dealer_message)
 
-    # Dedact a insurance case
     def check_incurance(self):
-
+        # If dealer shows a Ace
         if self.dealer_cards[0][0] == 'A':
-
+            print("")
             answer = input("Dealer has a A. Do you want to insurance? ")
+
             if Validation.yes_or_no(answer.lower()):
 
                 if answer.lower() == 'no':
@@ -132,7 +135,6 @@ class Play:
                     self.dealer_cards)
 
                 if check_dealers_cards == 21:
-
                     show_dealer_cards = Play.unpack_list(self.dealer_cards)
 
                     print(f"Dealer has a blackjack: {show_dealer_cards}.")
@@ -144,20 +146,17 @@ class Play:
 
                 else:
                     print(
-                        f"Dealer doesn't have a blackjack. Dealer takes you insurance: {self.bet / 2}")
+                        f"Dealer doesn't have a blackjack. Dealer takes your insurance: {self.bet / 2}")
                     self.amount -= self.bet / 2
 
                 return False
 
         return False
 
-    # Check to see if a player has a BlackJack.
-    # If no he/she continues with hit_or_stay()clear
     def is_there_blackjack(self, player=True):
-
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
-        if player_cards_sum == 21:
 
+        if player_cards_sum == 21:
             print(f"The dealer has {Play.unpack_list(self.dealer_cards)}")
 
             dealer_cards_sum = Play.calculate_dealt_card_value(
@@ -184,9 +183,9 @@ class Play:
             return False
 
     def split(self):
-        # Grabbing only digits from the player's cards
-        # and checking if they are equal to each other.
+        # Compare player's cards values
         if self.player_cards[0][0] == self.player_cards[1][0]:
+
             while True:
                 print(
                     f"You have two {self.player_cards[0]}, {self.player_cards[1]}")
@@ -199,42 +198,35 @@ class Play:
                         return False
 
                     self.splitted = True
-
-                    # save the bet for a double down case
                     save_bet_for_split = self.bet
 
-                    # Check if there are two aces and and play according to rule
+                    # Check if there are two Aces.
                     if self.player_cards[0][0] == 'A' and self.player_cards[1][0] == 'A':
                         self.split_aces = True
 
-                    # Play first splitted hand
                     first_hand = self.split_hand(1)
 
-                    # Give back the second dealt card to the player
+                    # Give back the second dealt card to the player.
                     self.player_cards = self.save_player_cards
 
-                    # Play second splitted hand
                     second_hand = self.split_hand(2)
 
                     hands = [first_hand, second_hand]
 
-                    # Play hands with dealer
+                    # Play each hand with a dealer.
                     for key, hand in enumerate(hands):
-
-                        # Restore a basic value of the bet
                         self.bet = save_bet_for_split
 
                         hand_number = "first" if key == 0 else "second"
 
                         if 'over_21' not in hand:
-
                             self.player_cards = hand
 
                             print("")
                             print(
                                 f"In the {hand_number} hand you have {Play.unpack_list(hand)}")
 
-                            # If there was a double down so determine the bet amount
+                            # If there was a double down so determine the bet amount.
                             if key == 0 and self.split_first_double != 0:
                                 self.bet = self.split_first_double
 
@@ -247,6 +239,7 @@ class Play:
                             # Player wins
                             if result == "wins":
 
+                                # Check BlackJack
                                 if self.splitted_blackjack:
                                     self.amount += self.bet * 1.5
 
@@ -263,9 +256,8 @@ class Play:
                             elif result == "tie":
                                 pass
 
-                        else:
-
-                            # Player gets over 21
+                        else:  # Player gets over 21
+                            print("")
                             print(
                                 f"In the {hand_number} hand you bust. Dealer wins {self.bet}")
                             self.amount -= self.bet
@@ -278,9 +270,10 @@ class Play:
                     self.start_new_hand(self.amount)
                     return True
 
-        else:
+        else:  # Player doesn't have same cards.
             return False
 
+    # Manage each hand in split.
     def split_hand(self, split_hand):
 
         self.prepare_cards_for_split()
@@ -290,17 +283,17 @@ class Play:
 
         self.player_turn()
 
+        # Determain double down case for first hand.
         if self.split_doubled and split_hand == 1:
             self.split_doubled = False
             self.split_first_double = self.bet * 2
 
+        # Determain double down case for second hand.
         if self.split_doubled and split_hand == 2:
             self.split_doubled = False
             self.split_second_double = self.bet * 2
 
-        # If player gets over 21 than the cards
-        # doesn't add in to the player's stock.
-        # Instead it adds 'over_21'message
+        # When player gets over 21 a 'over_21' is added.
         if self.player_over_21:
             self.player_cards = ['over_21']
 
@@ -309,60 +302,61 @@ class Play:
     def prepare_cards_for_split(self):
 
         self.player_over_21 = False
-
-        # Save player's cards
         self.save_player_cards = self.player_cards
-
-        # Cleaning player's stock
         self.player_cards = []
 
-        # Adding first card to the player's stock
+        # Give separate card for each hand.
         self.player_cards.append(self.save_player_cards.pop(0))
 
-    # Continue or keep the hand which was dealt.
     def player_turn(self):
+        commands = []
 
         while True:
-            # If player has not cards over 21 so hit proccess starts.
             if self.calculate_dealt_card_value(self.player_cards) <= 21:
 
-                # Manage a message appearance
-                action, correct_action = self.manage_msg_appearance()
+                # Get a current action's value and a commands list.
+                print("")
+                action, commands = self.manage_msg_appearance()
 
-                if action.lower() in correct_action:
+                if action.lower() in commands:
 
-                    # User hits
-                    if action.lower() == correct_action[0]:
+                    # commands[0] means that player hits.
+                    if action.lower() == commands[0]:
 
-                        # If a hand is splitted and there are two aces than by the
-                        # rule player gets only one card.
-                        # Otherwise he/she gets as many as wished
+                        # In a double Ace split case
+                        # the player hits only once.
                         if self.split_aces:
                             self.hit()
                             break
                         else:
                             self.hit()
 
+                    # Player double downs
                     if action == "double":
-                        if "double" in correct_action:
-                            if self.double_down(action, correct_action):
+                        if "double" in commands:
+                            if self.double_down(action, commands):
                                 break
 
-                    if action.lower() == correct_action[correct_action.index("stay")]:
+                    # Player stays
+                    if action.lower() == commands[commands.index("stay")]:
                         return False
 
                 else:
-                    print("Please write hit or stay. Try again.")
+                    print("")
+                    print(
+                        f"Please write hit{', double or' if 'double' in commands else ' or'} stay. Try again.")
             else:
                 self.player_over_21 = True
 
                 if not self.splitted:
+                    print("")
                     print(
                         f"Your cards value is over 21 and you lose ${self.bet}")
                     self.amount -= self.bet
                 else:
+                    print("")
                     print(
-                        f"You have got a cards over 21 and you busts in this hand.")
+                        f"You have got a cards over 21 and you bust in this hand.")
                 break
 
     # Dealers hand
@@ -372,18 +366,21 @@ class Play:
             if self.is_there_blackjack():
                 return 'wins'
 
+        print("")
         print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
 
         while dealer_cards_sum < 17:
-            self.hit(player=False)
 
+            self.hit(player=False)
             dealer_cards_sum = Play.calculate_dealt_card_value(
                 self.dealer_cards)
+
         else:
 
             if dealer_cards_sum > 21:
+                print("")
                 print(f"The dealer busts, you win ${self.bet} :)")
 
                 if not self.splitted:
@@ -394,6 +391,7 @@ class Play:
             else:
 
                 if dealer_cards_sum > player_cards_sum:
+                    print("")
                     print("The dealer stays.")
                     print(f"The dealer wins, you lose ${self.bet} :(")
 
@@ -403,6 +401,7 @@ class Play:
                         return "lose"
 
                 if dealer_cards_sum < player_cards_sum:
+                    print("")
                     print(f"You win and dealer lose ${self.bet} :)")
 
                     if not self.splitted:
@@ -411,12 +410,13 @@ class Play:
                         return "wins"
 
                 if dealer_cards_sum == player_cards_sum:
-
+                    # Assign original bet value if a hand is splitted and doubled.
                     tie_bet = self.bet / 2 \
                         if self.split_first_double > 0 or \
                         self.split_second_double > 0 \
                         else self.bet
 
+                    print("")
                     print(f"You tie. Your bet ${tie_bet} has been returned.")
 
                     if not self.splitted:
@@ -424,46 +424,47 @@ class Play:
                     else:
                         return "tie"
 
+    # Determain when a 'double' has to appear
+    # alogn with 'hit' and 'stay' commands
+    # and return the current action and
+    # list of the available commands.
     def manage_msg_appearance(self):
 
-        correct_action = ['hit', 'stay']
+        commands = ['hit', 'stay']
 
         if len(self.player_cards) == 2:
-            correct_action.insert(1, "double")
+            commands.insert(1, "double")
             action_msg = "hit, double or stay"
         else:
-            correct_action = ['hit', 'stay']
+            commands = ['hit', 'stay']
             action_msg = "hit or stay"
 
-        # Get a inout from user
         action = input(f"Would you like to {action_msg}? ")
-        return action, correct_action
+        return action, commands
 
-    # This implements double down rule in blackjack
-    def double_down(self, action="", correct_action=[]):
-        # Doubling down a hand
-        if action.lower() == correct_action[1] and len(self.player_cards) == 2:
+    # Implements double down rule.
+    def double_down(self, action="", commands=[]):
 
-            # Check to see if there is split or no
+        # commands[1] means 'double'.
+        if action.lower() == commands[1] and len(self.player_cards) == 2:
+
             if not self.splitted:
                 self.bet = self.bet * 2
             else:
                 self.split_doubled = True
 
-            # Add a card
             self.hit()
 
-            # Check if a player goes over 21
+            # Check if a player goes over 21.
             if self.calculate_dealt_card_value(self.player_cards) > 21:
                 self.player_over_21 = True
 
             return True
 
-    # If player parameter is Flase
-    # it adds a card to the dealer
+    # player=False gives a card to the dealer.
     def hit(self, player=True):
 
-        # Deal a last card from the deck
+        # Deal a last card from the deck.
         card = self.deck.pop(len(self.deck) - 1)
 
         unpack = None
@@ -476,7 +477,7 @@ class Play:
             p_message = "You are dealt: "
             card_message = "Now you have: "
 
-        else:  # Here is dealer's turn
+        else:  # Dealer's turn
             self.dealer_cards.append(card)
             unpack = self.dealer_cards
             p_message = "The dealer hits and is dealt: "
@@ -488,14 +489,13 @@ class Play:
 
         return card
 
-    # Start the new hand.
     def start_new_hand(self, amount):
         self.amount = amount
         self.player_cards = []
         self.dealer_cards = []
-        self.start_hand()
+        self.start_game()
 
-    # Unpack the list to comma separated string
+    # Unpack the list in to the comma separated string.
     @staticmethod
     def unpack_list(list):
         unpacked_list = ""
@@ -507,7 +507,7 @@ class Play:
 
     @staticmethod
     def calculate_dealt_card_value(list):
-        # Unpacking list and if there is an Ace taking it and putting
+        # Unpacking list and if there is an Ace taking and putting
         # it end of the list. Because with Ace end of the list it is
         # easy to determine the Ace value, Sould it be 11 or 1.
         sorted_list = []
@@ -523,23 +523,21 @@ class Play:
         sum = 0
         face_cards = ['T', 'J', 'Q', 'K']
         card_without_suit = ""
-        for item in sorted_list:
 
-            # Grabbing a value without a suit
+        for item in sorted_list:
             card_without_suit = item[0]
 
-            # If letter is face card so it's value is 10
+            # If a suit is a face one so it's value is 10.
             if card_without_suit in face_cards:
                 sum += 10
-            # If the sum and a Ace is more than 21 or equals to 21
-            # then Ace value is 11 else it is 1
+
+            # If the sum with a Ace is more than 21 or equals to 21
+            # then Ace value is 11 else it is 1.
             elif card_without_suit.upper() == "A":
                 if (sum + 11) <= 21:
                     sum += 11
                 else:
                     sum += 1
-            # If letter is digit it adds to sum converted
-            # to the integer
             else:
                 sum += int(card_without_suit)
 

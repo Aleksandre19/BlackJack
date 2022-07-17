@@ -1,3 +1,8 @@
+"""
+This class implements a deck functionality.
+It creates a deck and shuffles it with a 
+separate functions.
+"""
 import random
 
 
@@ -12,7 +17,7 @@ class Deck:
         card_suits = ["\u2666", "\u2665", "\u2663", "\u2660"]
         deck_list = []
 
-        # Make a deck of cards
+        # Make a deck.
         for suit in card_suits:
             for value in card_values:
                 deck_list.append(value + suit)

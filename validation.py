@@ -1,3 +1,8 @@
+"""
+This class is being used for validation during the play.
+"""
+
+
 class Validation:
     @staticmethod
     def start_game_validation(play_or_no):
