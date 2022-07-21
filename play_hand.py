@@ -14,7 +14,6 @@ starting a new hand - self.start_new_hand().
 
 The game starts with a self.start_game()
 """
-import random
 from deck import Deck
 from validation import Validation
 
@@ -88,15 +87,15 @@ class Play:
 
         self.dealing_cards_to_players()
 
-        self.dealt_hand_info()
-
         # self.player_cards = []
-        # test = ['6\u2666', '6\u2665']
+        # test = ['A\u2666', 'K\u2665']
         # self.player_cards.extend(test)
 
         # self.dealer_cards = []
-        # test = ['2\u2666', '5\u2665']
+        # test = ['A\u2666', '2\u2665']
         # self.dealer_cards.extend(test)
+
+        self.dealt_hand_info()
 
     # First card to the player and
     # the second card to the dealer
@@ -139,7 +138,7 @@ class Play:
 
                     print(f"Dealer has a blackjack: {show_dealer_cards}.")
                     print(
-                        f"You win {self.bet} for insurance and lose you initial bet: {self.bet}")
+                        f"You win {self.bet} for insurance and lose your initial bet: {self.bet}")
 
                     self.start_new_hand(self.amount)
                     return True
@@ -187,6 +186,7 @@ class Play:
         if self.player_cards[0][0] == self.player_cards[1][0]:
 
             while True:
+                print("")
                 print(
                     f"You have two {self.player_cards[0]}, {self.player_cards[1]}")
 
@@ -314,8 +314,10 @@ class Play:
         while True:
             if self.calculate_dealt_card_value(self.player_cards) <= 21:
 
+                if not self.splitted:
+                    print("")
+
                 # Get a current action's value and a commands list.
-                print("")
                 action, commands = self.manage_msg_appearance()
 
                 if action.lower() in commands:
@@ -366,7 +368,9 @@ class Play:
             if self.is_there_blackjack():
                 return 'wins'
 
-        print("")
+        if not self.splitted:
+            print("")
+
         print(f"The dealer has: {Play.unpack_list(self.dealer_cards)}")
         dealer_cards_sum = Play.calculate_dealt_card_value(self.dealer_cards)
         player_cards_sum = Play.calculate_dealt_card_value(self.player_cards)
@@ -391,7 +395,10 @@ class Play:
             else:
 
                 if dealer_cards_sum > player_cards_sum:
-                    print("")
+
+                    if not self.splitted:
+                        print("")
+
                     print("The dealer stays.")
                     print(f"The dealer wins, you lose ${self.bet} :(")
 
